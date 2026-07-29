@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+build
+coverage
+package-lock.json
+next-env.d.ts
+src/db/types.generated.ts
+
+# オーナー提供の文書は原文のまま保つ（整形で差分を出さない）
+docs/
+.claude/
