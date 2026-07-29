@@ -18,9 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Nodeのバージョンは .nvmrc に一本化する。CIと手元で別々に指定すると
+      # 「手元では通るのにCIで落ちる」が起きる（実際に起きたので固定した）。
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
 
       # package-lock.json のとおりに入れる。lockと違う版が入って
@@ -48,9 +50,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Nodeのバージョンは .nvmrc に一本化する。CIと手元で別々に指定すると
+      # 「手元では通るのにCIで落ちる」が起きる（実際に起きたので固定した）。
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
 
       - run: npm ci

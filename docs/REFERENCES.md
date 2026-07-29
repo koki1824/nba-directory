@@ -58,6 +58,22 @@
 
 ---
 
+## W1-2 テスト基盤とCI
+
+### 6. Nodeのバージョン指定 ［CIの実失敗から確定］
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象領域 | 開発環境とCIのNodeバージョン管理 |
+| 採用パターン | **`.nvmrc` に一本化**し、CIは `node-version-file: .nvmrc` で読む。`package.json` の `engines` と `.npmrc` の `engine-strict=true` で、条件を満たさないNodeでは `npm install` の時点で止める |
+| 採用理由 | CIのNodeを `20` と直接書いていたところ、**単体テストだけがCIで失敗**した（手元はNode 22で成功）。原因は `jsdom@30` が同梱する `undici@8` が `node:worker_threads` の `markAsUncloneable` を使っており、これがNode 22.22.2以降にしか無いこと。エラーは `webidl.util.markAsUncloneable is not a function` という原因の分かりにくい形で出た。バージョンの指定場所が2箇所あったことが根本原因なので、1箇所に統合した。 |
+| 不採用の代替案 | ①CIのNodeだけ22に上げる → 指定が2箇所に残るので同じ事故が再発する。②jsdomをhappy-domに置き換えてundiciを避ける → 症状は消えるがNodeのバージョン差という本当の原因が残り、他の依存で再発する。 |
+| 影響 | ROADMAP `W0-5` の「Node.js 20以上」を **22.22.2以上**へ引き上げた。 |
+
+**この失敗自体がCIの価値の実例です。** 手元では4種類の検査が全て緑でしたが、CIがNodeの差を捕まえました。
+
+---
+
 ## 未解決 / オーナー判断が必要
 
 ### 依存パッケージの脆弱性（対処済みだが、恒久策は未確定）
