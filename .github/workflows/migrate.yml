@@ -1,0 +1,63 @@
+name: マイグレーション適用
+
+# 本番DB（Supabase）へスキーマを反映するワークフロー。
+#
+# main にマージされ、かつマイグレーション関連のファイルが変わったときだけ動く。
+# 接続文字列は GitHub の Secrets から読む。ログには絶対に出さない。
+#
+# Secrets が未登録の間は「登録待ち」と表示して正常終了する。
+# ここで赤くしてしまうと、まだ設定していない段階で CI がずっと失敗扱いになるため。
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/migrate.mjs"
+      - ".github/workflows/migrate.yml"
+  # 手動でも流せるようにしておく（Secrets を登録した直後など）
+  workflow_dispatch:
+
+# 同時に2つ流れると適用順が乱れるので、必ず1つずつ実行する。
+# 実行中のものは止めない（DBへの適用途中で打ち切らないため）。
+concurrency:
+  group: migrate-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: 本番DBへ適用
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Secrets の有無を確認
+        id: check
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          # 値そのものは出さない。長さすら出さない。
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::SUPABASE_DB_URL が未登録のため適用をスキップしました。リポジトリの Settings > Secrets and variables > Actions で登録してください。"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 適用対象の確認（dry-run）
+        if: steps.check.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/migrate.mjs --dry-run
+
+      - name: 適用
+        if: steps.check.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/migrate.mjs

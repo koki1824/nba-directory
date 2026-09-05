@@ -44,6 +44,44 @@ jobs:
       - name: 本番ビルド
         run: npm run build
 
+  migrations:
+    name: マイグレーションの検証
+    runs-on: ubuntu-latest
+    # 使い捨てのPostgreSQLを立てて、そこへ実際にSQLを流す。
+    # 本番DBに触れる前に「このSQLは通るのか」をCIで証明するのが目的。
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: verify
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: まっさらなDBへ適用できるか
+        env:
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: node scripts/migrate.mjs
+
+      - name: 二度流しても壊れないか（冪等性）
+        env:
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: node scripts/migrate.mjs
+
   e2e:
     name: E2Eテスト
     runs-on: ubuntu-latest
