@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Logo, LogoLockup } from "@/components/brand/Logo";
 import { Button, MissingValue, Select, StatBar, Table, Tabs, Td, Th } from "@/components/ui";
 
 /**
@@ -65,6 +66,44 @@ export default function StyleguidePage() {
           ARCHIVE」に基づいています。色の数値は WCAG コントラスト比を実測して決めました。
         </p>
       </header>
+
+      <Section title="ロゴ">
+        <p className="text-ink-muted mb-4 text-sm">
+          円＝コート、縦線＝センターライン、左の弧＝キー（赤がアクセント）、右の棒＝スタッツ、
+          チェック＝出典を確認した数値。
+          <strong className="text-ink">サイト名が変わってもシンボルは流用できます。</strong>
+        </p>
+        <div className="mb-6 flex flex-wrap items-end gap-8">
+          {[16, 20, 24, 32, 48, 64].map((s) => (
+            <div key={s} className="flex flex-col items-center gap-2">
+              <Logo size={s} className="text-ink" />
+              <span className="text-ink-muted text-[11px]">{s}px</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-ink-muted mb-3 text-sm">
+          20px 未満は細部が潰れるため、自動で簡略版（円・センターライン・棒のみ）に切り替わります。
+          下は同じ 16px を「簡略版」と「全部入り」で並べたもの。
+        </p>
+        <div className="mb-6 flex items-end gap-8">
+          <div className="flex flex-col items-center gap-2">
+            <Logo size={16} variant="compact" className="text-ink" />
+            <span className="text-ink-muted text-[11px]">16px 簡略版</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <Logo size={16} variant="full" className="text-ink" />
+            <span className="text-ink-muted text-[11px]">16px 全部入り（潰れる）</span>
+          </div>
+        </div>
+        <p className="text-ink-muted mb-3 text-sm">ヘッダー用のロックアップ</p>
+        <div className="bg-surface border-line mb-4 border p-4">
+          <LogoLockup />
+        </div>
+        <p className="text-ink-muted mb-3 text-sm">濃紺の面に置いた場合</p>
+        <div className="bg-ink text-ink-inverse p-4">
+          <LogoLockup />
+        </div>
+      </Section>
 
       <Section title="色">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
