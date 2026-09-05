@@ -49,7 +49,9 @@
   | `pooler.supabase.com` を含み `:6543` で終わる | ❌ Transaction pooler |
   | `db.〇〇.supabase.co` を含む | ❌ Direct connection（IPv6のみ。GitHub ActionsはIPv4） |
 
-  `scripts/migrate.mjs` が起動時にこの判定を行い、向いていない文字列なら警告する。
+  取得画面に **Type** の選択がある場合は **URI** を選ぶこと。Node.js や JDBC を選ぶと
+  コード片やパラメータの羅列になり、1本の文字列にならない。
+  `scripts/migrate.mjs` が起動時にこれらを判定し、向いていない文字列なら警告する。
 
 ## ラベル
 

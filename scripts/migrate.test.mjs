@@ -34,6 +34,23 @@ describe("describeConnection", () => {
     expect(result.warning).toContain("IPv6");
   });
 
+  it("URI形式でない値（Node.jsのコード片など）は形式ごと指摘する", () => {
+    const result = describeConnection("const client = new Client({ host: 'aws-0.pooler...' })");
+
+    expect(result.kind).toBe("not-a-uri");
+    expect(result.warning).toContain("URI");
+  });
+
+  it("postgres:// でも postgresql:// でも通す", () => {
+    expect(
+      describeConnection("postgres://postgres.ab:pw@aws-0.pooler.supabase.com:5432/postgres").kind,
+    ).toBe("session-pooler");
+    expect(
+      describeConnection("postgresql://postgres.ab:pw@aws-0.pooler.supabase.com:5432/postgres")
+        .kind,
+    ).toBe("session-pooler");
+  });
+
   it("ローカルのPostgreSQLなどSupabase以外は通す（CIの検証用DB）", () => {
     const result = describeConnection("postgres://postgres:postgres@localhost:5432/verify");
 

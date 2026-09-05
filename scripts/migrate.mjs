@@ -56,6 +56,18 @@ function fail(message) {
  * 実際に動く可能性は残すため、止めずに警告だけにする。
  */
 export function describeConnection(connectionString) {
+  // Supabase の Connect 画面には Type の選択があり、Node.js や JDBC を選ぶと
+  // コード片やパラメータの羅列になる。ここで欲しいのは URI 形式の1本の文字列。
+  if (!/^postgres(ql)?:\/\//.test(connectionString)) {
+    return {
+      kind: "not-a-uri",
+      warning:
+        "接続文字列が postgresql:// で始まっていません。\n" +
+        "  Supabase の Connect 画面では、Type に **URI** を選んでください。\n" +
+        "  Node.js や JDBC を選ぶと、コード片やパラメータの羅列になります。",
+    };
+  }
+
   // 認証情報を触らずに済むよう、ホストとポートだけを見る。
   const match = /@([^/?]+)/.exec(connectionString);
   const hostPort = match?.[1] ?? "";
