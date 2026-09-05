@@ -37,6 +37,10 @@
   スキーマ適用後は CI やアプリから定期的にアクセスが発生するので、起きにくくなる。
 - **`next start` のプロセスが残っていると、再ビルドしても古い画面が配信され続ける。**
   画面で確認するときは、見ているものが最新のビルドかを疑うこと（→ [REFERENCES.md](./REFERENCES.md) 項目12）。
+- **Supabase の接続文字列は、ダッシュボード上部の「Connect」ボタンから取る。**
+  Project Settings の中に Database の項目は無い（UIが変更された）。
+  取得時は **「Session pooler」を選ぶこと。** Direct connection は IPv6 のみで、
+  GitHub Actions は IPv4 のため接続できない。
 
 ## ラベル
 

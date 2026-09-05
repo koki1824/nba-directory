@@ -154,7 +154,27 @@ async function main() {
   }
 }
 
+/** 接続できないときは、原因として多いものを案内する。 */
+function connectionHint(message) {
+  const looksLikeNetwork =
+    /ENOTFOUND|ECONNREFUSED|ETIMEDOUT|EHOSTUNREACH|ENETUNREACH|Connection terminated/i.test(
+      message,
+    );
+  if (!looksLikeNetwork) return "";
+
+  return (
+    "\n\n  DBに接続できていません。よくある原因:\n" +
+    "  1. Supabase の Direct connection の文字列を使っている\n" +
+    "     → Direct connection は IPv6 のみ。GitHub Actions は IPv4 なので繋がりません。\n" +
+    "       ダッシュボード上部の Connect から「Session pooler」の文字列に差し替えてください。\n" +
+    "  2. Supabase のプロジェクトが一時停止している\n" +
+    "     → ダッシュボードで Restore / Resume を押してください。\n" +
+    "  3. 接続文字列の [YOUR-PASSWORD] を実際のパスワードに置き換えていない"
+  );
+}
+
 main().catch((error) => {
   // 接続文字列が混ざらないよう、エラーメッセージだけを出す。
-  fail(error instanceof Error ? error.message : String(error));
+  const message = error instanceof Error ? error.message : String(error);
+  fail(message + connectionHint(message));
 });
