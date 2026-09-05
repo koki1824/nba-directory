@@ -82,8 +82,8 @@ export default function StyleguidePage() {
           ))}
         </div>
         <p className="text-ink-muted mb-3 text-sm">
-          20px 未満は細部が潰れるため、自動で簡略版（円・センターライン・棒のみ）に切り替わります。
-          下は同じ 16px を「簡略版」と「全部入り」で並べたもの。
+          24px 未満は細部が潰れるため、自動で簡略版（円・センターライン・赤の3要素のみ）に
+          切り替わります。下は同じ 16px を「簡略版」と「全部入り」で並べたもの。
         </p>
         <div className="mb-6 flex items-end gap-8">
           <div className="flex flex-col items-center gap-2">
