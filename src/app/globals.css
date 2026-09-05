@@ -1,22 +1,97 @@
 @import "tailwindcss";
 
 /*
- * W1-1 時点では最小限のベーススタイルのみを置いています。
- * ブランドのデザイントークン（背景 #F7F4EE / メイン #0F1D2D / アクセント #B23A2E ほか）は
- * W1-3「デザイントークン実装」で正式に定義します。ここで先取りして色を散らかさないこと。
+ * デザイントークン（W1-3）
+ *
+ * 出典: docs/07_brand_direction.jpg「Direction A — COURT ARCHIVE」
+ *   背景 #F7F4EE / メイン #0F1D2D / アクセント #B23A2E / 補助グレー
+ *   見出し = 明朝体 / 本文 = ゴシック体
+ *
+ * 禁止事項（要件定義書・オーバーライド v3 §8）:
+ *   紫グラデーション / 過剰な角丸カード / glassmorphism / AI生成感の強いUI
+ *
+ * 色は WCAG コントラスト比を実測して決めています。数値は各行のコメント参照。
+ * 「近い色に見えるから」で書き換えないこと。基準を割ります。
  */
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ---- 面 ---------------------------------------------------------- */
+  --color-canvas: #f7f4ee; /* ページ地。すべてのコントラスト比の基準 */
+  --color-surface: #fffdf9; /* カード・表ヘッダなど、地から一段持ち上げる面 */
+  --color-surface-sunken: #efeade; /* 逆に沈める面。選択待ちの枠など */
+
+  /* ---- 文字 -------------------------------------------------------- */
+  --color-ink: #0f1d2d; /* 本文・数値の既定色。canvas上 15.50:1 */
+  --color-ink-muted: #5d6570; /* ラベル・注記。canvas上 5.37:1（本文基準を満たす） */
+  --color-ink-inverse: #f7f4ee; /* 濃紺の上に置く文字。ink上 15.50:1 */
+
+  /* ---- 罫線 -------------------------------------------------------- */
+  --color-line: #d3ccbe; /* 表の区切りなど装飾的な細線 */
+  --color-line-strong: #8f8878; /* 入力欄など操作部品の境界。canvas上 3.21:1 */
+
+  /* ---- アクセント --------------------------------------------------- */
+  /* 決定 Q10: 数値の既定色は ink。赤は「強調・罫線・選択状態」に限定する。
+     数値を赤で塗り分けないこと（docs/DECISIONS.md W0-7 Q10）。 */
+  --color-accent: #b23a2e; /* canvas上 5.41:1 / 白文字を載せて 5.94:1 */
+  --color-accent-hover: #97301f;
+
+  /* ---- 比較スロット色 ------------------------------------------------
+     選手比較で最大4人を見分けるための色（docs/DECISIONS.md W0-6 §2）。
+     モック 02_compare.jpg の 選手A=赤 / 選手B=青 を踏襲し、3・4人目を追加。
+
+     【重要】この4色は明度がほぼ同じで、色相でしか区別できません
+     （相互のコントラスト比は 1.04〜1.46:1）。
+     色覚特性やモノクロ印刷では判別できないため、**色だけで選手を区別しない**こと。
+     必ず A / B / C / D のラベルか選手名を併記する。 */
+  --color-slot-1: #b23a2e; /* 赤   canvas上 5.41:1 */
+  --color-slot-2: #1e4e8c; /* 青   canvas上 7.58:1 */
+  --color-slot-3: #2e6b5a; /* 深緑 canvas上 5.68:1 */
+  --color-slot-4: #8a5e14; /* 黄土 canvas上 5.18:1 */
+
+  /* ---- 角丸 --------------------------------------------------------
+     「過剰な角丸カード」を避けるため上限を小さく取る。
+     カードに rounded-lg 以上を使わないこと。 */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+
+  /* ---- 書体 --------------------------------------------------------
+     外部フォントを取得しない。ビルドをネットワークに依存させないため
+     （理由は docs/REFERENCES.md W1-3 の項目8）。
+     日本語環境に既定で入っている明朝／ゴシックを指定する。 */
+  --font-serif:
+    "Yu Mincho", YuMincho, "Hiragino Mincho ProN", "Noto Serif JP", "Times New Roman", serif;
+  --font-sans:
+    "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", YuGothic, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+html {
+  background: var(--color-canvas);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* 見出しは明朝。Direction A の「信頼と知性を感じるタイポグラフィ」の要。 */
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+}
+
+/* スタッツは桁を縦に揃える。表で数値が踊るのを防ぐ。 */
+table,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* キーボード操作時のフォーカスを必ず見えるようにする（W5-9 の前倒し）。 */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
