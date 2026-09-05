@@ -39,8 +39,17 @@
   画面で確認するときは、見ているものが最新のビルドかを疑うこと（→ [REFERENCES.md](./REFERENCES.md) 項目12）。
 - **Supabase の接続文字列は、ダッシュボード上部の「Connect」ボタンから取る。**
   Project Settings の中に Database の項目は無い（UIが変更された）。
-  取得時は **「Session pooler」を選ぶこと。** Direct connection は IPv6 のみで、
-  GitHub Actions は IPv4 のため接続できない。
+  さらに「Session pooler」はトップに出ておらず、**`Direct — Connection string` のタイルの中**に
+  Direct / Transaction pooler / Session pooler の3つが並んでいる。
+  **UIのラベルは変わりうるので、文字列そのもので見分けること:**
+
+  | 文字列の特徴 | 判定 |
+  | --- | --- |
+  | `pooler.supabase.com` を含み `:5432` で終わる | ✅ Session pooler（これを使う） |
+  | `pooler.supabase.com` を含み `:6543` で終わる | ❌ Transaction pooler |
+  | `db.〇〇.supabase.co` を含む | ❌ Direct connection（IPv6のみ。GitHub ActionsはIPv4） |
+
+  `scripts/migrate.mjs` が起動時にこの判定を行い、向いていない文字列なら警告する。
 
 ## ラベル
 

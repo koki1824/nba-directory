@@ -48,6 +48,46 @@ function fail(message) {
   process.exit(1);
 }
 
+/**
+ * 接続文字列の種類を見て、向いていないものなら警告する。
+ *
+ * Supabase は3種類の接続文字列を出す。見た目が似ているのに挙動が違い、
+ * 間違えると「接続できない」としか分からない形で失敗するので、先に指摘する。
+ * 実際に動く可能性は残すため、止めずに警告だけにする。
+ */
+export function describeConnection(connectionString) {
+  // 認証情報を触らずに済むよう、ホストとポートだけを見る。
+  const match = /@([^/?]+)/.exec(connectionString);
+  const hostPort = match?.[1] ?? "";
+  const isPooler = hostPort.includes("pooler.supabase.com");
+  const isSupabaseDirect = /db\.[a-z0-9]+\.supabase\.co/.test(hostPort);
+  const port = /:(\d+)$/.exec(hostPort)?.[1];
+
+  if (isPooler && port === "5432") {
+    return { kind: "session-pooler", warning: null };
+  }
+  if (isPooler && port === "6543") {
+    return {
+      kind: "transaction-pooler",
+      warning:
+        "Transaction pooler（ポート6543）の接続文字列が設定されています。\n" +
+        "  マイグレーションには Session pooler（ポート5432）を使ってください。\n" +
+        "  Supabase の Connect > Direct(Connection string) の中に3種類あります。",
+    };
+  }
+  if (isSupabaseDirect) {
+    return {
+      kind: "direct",
+      warning:
+        "Direct connection の接続文字列が設定されています。\n" +
+        "  Direct connection は IPv6 のみのため、GitHub Actions（IPv4）からは繋がりません。\n" +
+        "  pooler.supabase.com を含み :5432 で終わる Session pooler の文字列に差し替えてください。",
+    };
+  }
+  // ローカルのPostgreSQLなど、Supabase以外はそのまま通す。
+  return { kind: "other", warning: null };
+}
+
 async function loadMigrationFiles() {
   let entries;
   try {
@@ -78,6 +118,12 @@ async function main() {
         "  GitHub Actions の場合: リポジトリの Settings > Secrets に SUPABASE_DB_URL を登録してください。\n" +
         "  手元で試す場合    : SUPABASE_DB_URL='postgres://...' node scripts/migrate.mjs",
     );
+  }
+
+  const { warning } = describeConnection(connectionString);
+  if (warning) {
+    // 止めはしない。動く環境もありうるので、判断材料だけ出す。
+    console.warn(`\n⚠ ${warning}\n`);
   }
 
   const migrations = await loadMigrationFiles();
@@ -173,8 +219,15 @@ function connectionHint(message) {
   );
 }
 
-main().catch((error) => {
-  // 接続文字列が混ざらないよう、エラーメッセージだけを出す。
-  const message = error instanceof Error ? error.message : String(error);
-  fail(message + connectionHint(message));
-});
+// テストから describeConnection を import しただけで main() が走らないようにする。
+// 直接 `node scripts/migrate.mjs` と実行されたときだけ動かす。
+const invokedDirectly =
+  process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (invokedDirectly) {
+  main().catch((error) => {
+    // 接続文字列が混ざらないよう、エラーメッセージだけを出す。
+    const message = error instanceof Error ? error.message : String(error);
+    fail(message + connectionHint(message));
+  });
+}

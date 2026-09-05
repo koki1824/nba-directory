@@ -13,7 +13,7 @@ export default defineConfig({
     // どこから来た関数かがファイル内で完結し、型も自動で効く。
     setupFiles: ["./src/test/setup.ts"],
     // E2E（Playwright）は別コマンドで動かすので、Vitestの対象から外す。
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}", "scripts/**/*.test.mjs"],
     exclude: ["node_modules/**", ".next/**", "e2e/**"],
     coverage: {
       provider: "v8",
