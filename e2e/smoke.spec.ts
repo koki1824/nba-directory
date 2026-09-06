@@ -146,7 +146,25 @@ test.describe("狭い画面でレイアウトが崩れないこと", () => {
 
 test.describe("横スクロールが出ないこと", () => {
   // 横にはみ出すと、指で横に振らないと読めないページになる。
-  for (const path of ["/", "/players", "/compare", "/rankings", "/styleguide"]) {
+  //
+  // 【中身の入ったURLを必ず入れる】
+  // 以前このリストが空の /compare しか見ていなかったため、
+  // 選手を2人入れた比較ページが 412px の画面に対して 498px はみ出していたのを
+  // 取り逃がした。データが入って初めて崩れる形があるので、
+  // 実際に中身のあるURLで見張る。
+  for (const path of [
+    "/",
+    "/players",
+    "/compare",
+    "/compare?p=dev-dante-okafor-7&p=dev-nikolai-brandt-13",
+    "/compare?p=dev-dante-okafor-7&p=dev-nikolai-brandt-13&p=dev-marcus-hollowell-1&p=dev-rashad-emerson-19",
+    "/players/dev-amari-lindqvist-15",
+    "/teams",
+    "/teams/dev-harbor-anchors",
+    "/teams/dev-harbor-anchors/2023-24",
+    "/rankings",
+    "/styleguide",
+  ]) {
     test(`${path} が横にはみ出さない`, async ({ page }) => {
       await page.goto(path);
 

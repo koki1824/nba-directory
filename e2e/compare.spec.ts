@@ -41,8 +41,10 @@ test.describe("比較ページ", () => {
     // 両方の名前が見出しとして出る
     await expect(page.getByRole("heading", { name: /オカフォー/ })).toBeVisible();
     await expect(page.getByRole("heading", { name: /ブラント/ })).toBeVisible();
-    // 指標名が中央に並ぶ
-    await expect(page.getByText("得点", { exact: true })).toBeVisible();
+    // 指標名が出る。
+    // 広い画面と狭い画面で別のまとまりを描き分けているため、
+    // どちらの幅で走っても「見えているほう」だけを見る。
+    await expect(page.getByText("得点", { exact: true }).filter({ visible: true })).toHaveCount(1);
   });
 
   test("色だけに頼らず、名前とラベルを併記している", async ({ page }) => {
@@ -61,7 +63,13 @@ test.describe("比較ページ", () => {
     await page.goto(TWO);
     await skipIfNoDatabase(page);
 
-    await expect(page.getByText("少ないほど良い").first()).toBeVisible();
+    // 狭い画面では「（少ないほど良い）」と括弧付きで並記するので、部分一致で見る。
+    await expect(
+      page
+        .getByText(/少ないほど良い/)
+        .filter({ visible: true })
+        .first(),
+    ).toBeVisible();
   });
 
   test("3〜4人なら表で比べられる", async ({ page }) => {
@@ -140,5 +148,52 @@ test.describe("比較ページ", () => {
     await expect(page.getByRole("heading", { level: 1, name: "選手を比較する" })).toBeVisible();
     // 2人ぶんの見出しが出ている
     await expect(page.getByRole("heading", { level: 2 })).toHaveCount(2);
+  });
+});
+
+test.describe("比較のモバイル表示（W2-11）", () => {
+  test("狭い画面では縦積みになり、横にはみ出さない", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chromium", "スマホ幅のみ");
+
+    await page.goto(TWO);
+    await skipIfNoDatabase(page);
+
+    // 向かい合わせは横に3列必要で、スマホの幅に収まらない。
+    // 実測で 412px の画面に 498px はみ出していたのを縦積みで直した。
+    const overflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
+  });
+
+  test("狭い画面でも両方の選手の値が読める", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chromium", "スマホ幅のみ");
+
+    await page.goto(TWO);
+    await skipIfNoDatabase(page);
+
+    // 縦積みでは各行に「A 選手名」「B 選手名」が付く
+    await expect(page.getByText(/^A /).first()).toBeVisible();
+    await expect(page.getByText(/^B /).first()).toBeVisible();
+  });
+
+  test("スクロールしても誰と誰かが分かる（上部に固定）", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chromium", "スマホ幅のみ");
+
+    await page.goto(TWO);
+    await skipIfNoDatabase(page);
+
+    const heading = page.getByRole("heading", { level: 2 }).first();
+    const before = await heading.boundingBox();
+
+    await page.evaluate(() => window.scrollTo(0, 600));
+    await page.waitForTimeout(200);
+
+    const after = await heading.boundingBox();
+    // 貼り付いていれば、画面内に残ったまま
+    expect(after).not.toBeNull();
+    expect(after!.y).toBeLessThan((before?.y ?? 0) + 200);
+    expect(after!.y).toBeGreaterThanOrEqual(0);
   });
 });

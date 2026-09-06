@@ -16,23 +16,42 @@ type TableProps = {
   caption: string;
   /** caption を目に見える見出しとしても出すか */
   showCaption?: boolean;
+  /**
+   * 列が多く、狭い画面では確実にはみ出す表に付ける。
+   * 「横に振れば続きがある」と気づけるよう、小さい画面でだけ一言添える。
+   * スクロールできること自体は見た目から分かりにくく、
+   * 右側の列があることに気づかないまま読み終える人が出る。
+   */
+  wide?: boolean;
   className?: string;
 };
 
-export function Table({ children, caption, showCaption = false, className }: TableProps) {
+export function Table({
+  children,
+  caption,
+  showCaption = false,
+  wide = false,
+  className,
+}: TableProps) {
   return (
-    <div className="w-full overflow-x-auto">
-      <table className={cx("w-full border-collapse text-sm", className)}>
-        <caption
-          className={cx(
-            "text-ink-muted text-left",
-            showCaption ? "pb-2 text-xs" : "sr-only", // sr-only = 目には見えないが読み上げられる
-          )}
-        >
-          {caption}
-        </caption>
-        {children}
-      </table>
+    <div className="w-full">
+      <div className="w-full overflow-x-auto">
+        <table className={cx("w-full border-collapse text-sm", className)}>
+          <caption
+            className={cx(
+              "text-ink-muted text-left",
+              showCaption ? "pb-2 text-xs" : "sr-only", // sr-only = 目には見えないが読み上げられる
+            )}
+          >
+            {caption}
+          </caption>
+          {children}
+        </table>
+      </div>
+      {wide && (
+        // 広い画面では収まるので出さない。
+        <p className="text-ink-muted mt-2 text-[11px] sm:hidden">→ 横にスクロールできます</p>
+      )}
     </div>
   );
 }

@@ -23,6 +23,7 @@ type Props = {
 export function PlayerTable({ players, seasonId }: Props) {
   return (
     <Table caption={`選手一覧（${seasonId ?? "シーズン未設定"} のレギュラーシーズン成績）`}>
+      wide
       <thead>
         <tr>
           <Th>選手</Th>

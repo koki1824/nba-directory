@@ -43,6 +43,7 @@ export function SeasonStatsTable({ rows, seasonType }: Props) {
   return (
     <Table
       caption={`シーズン別成績（${seasonType === "playoff" ? "プレーオフ" : "レギュラーシーズン"}）`}
+      wide
     >
       <thead>
         <tr>

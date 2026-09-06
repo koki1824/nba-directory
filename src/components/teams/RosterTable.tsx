@@ -28,6 +28,7 @@ export function RosterTable({ rows, seasonId }: { rows: RosterRow[]; seasonId: s
   return (
     <>
       <Table caption={`${seasonId} シーズンの在籍選手`}>
+        wide
         <thead>
           <tr>
             <Th align="right">#</Th>
