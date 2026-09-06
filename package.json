@@ -15,6 +15,7 @@
     "format:check": "prettier --check .",
     "migrate": "node scripts/migrate.mjs",
     "migrate:dry": "node scripts/migrate.mjs --dry-run",
+    "verify:schema": "node scripts/verify-schema.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

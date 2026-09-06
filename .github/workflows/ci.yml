@@ -82,6 +82,13 @@ jobs:
           SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
         run: node scripts/migrate.mjs
 
+      # 制約を「書いた」ではなく「効いている」ことを毎回確かめる。
+      # 実際に不正なデータを入れて弾かれるかを見る。検証データは最後に巻き戻す。
+      - name: スキーマの検証
+        env:
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: node scripts/verify-schema.mjs
+
   e2e:
     name: E2Eテスト
     runs-on: ubuntu-latest
