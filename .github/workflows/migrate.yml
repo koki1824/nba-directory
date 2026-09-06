@@ -50,6 +50,13 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # 先に接続だけを確かめる。Secrets が正しいかを、DBを変更する前に確認するため。
+      - name: 接続確認
+        if: steps.check.outputs.ready == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/migrate.mjs --check
+
       - name: 適用対象の確認（dry-run）
         if: steps.check.outputs.ready == 'true'
         env:

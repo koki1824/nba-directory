@@ -33,6 +33,9 @@ const MIGRATIONS_DIR = path.join(
 );
 
 const dryRun = process.argv.includes("--dry-run");
+// 接続できるかだけを確かめるモード。マイグレーションが1件も無い状態でも
+// 「Secretsが正しいか」を先に確認できるようにするため。
+const checkOnly = process.argv.includes("--check");
 
 /** 適用履歴を持つテーブル。無ければ作る。 */
 const CREATE_HISTORY_TABLE = `
@@ -139,7 +142,7 @@ async function main() {
   }
 
   const migrations = await loadMigrationFiles();
-  if (migrations.length === 0) {
+  if (migrations.length === 0 && !checkOnly) {
     console.log("適用対象のマイグレーションはありません。");
     return;
   }
@@ -158,6 +161,22 @@ async function main() {
 
     const { rows } = await client.query("select version, checksum from public.schema_migrations");
     const applied = new Map(rows.map((row) => [row.version, row.checksum]));
+
+    if (checkOnly) {
+      // 接続とテーブル作成の権限があることまで確認できれば十分。
+      // バージョン等は環境の特定に使える範囲だけ出す（接続文字列は出さない）。
+      const { rows: info } = await client.query(
+        "select current_database() as db, current_user as usr, split_part(version(), ' on ', 1) as ver",
+      );
+      const row = info[0];
+      console.log("✓ 接続できました。");
+      console.log(`  データベース: ${row?.db}`);
+      console.log(`  ユーザー    : ${row?.usr}`);
+      console.log(`  サーバー    : ${row?.ver}`);
+      console.log(`  適用済み    : ${applied.size} 件`);
+      console.log(`  未適用      : ${migrations.filter((m) => !applied.has(m.version)).length} 件`);
+      return;
+    }
 
     // 適用済みファイルが書き換えられていないか先に全部確認する。
     // 1件でも食い違ったら、何も流さずに止める。
