@@ -165,6 +165,50 @@ export default function StyleguidePage() {
         </div>
       </Section>
 
+      <Section title="押せるカード（.card-lift）">
+        <p className="text-ink-muted mb-4 text-sm">
+          カーソルを重ねると 2px 浮き上がり、押すと沈みます。
+          <strong className="text-ink">「ここは押せる」を文字で説明せずに伝えるための約束事</strong>
+          です。カード全体がリンクなので、指で押す範囲が広く取れます。
+          浮きと影を控えめにしているのは、Direction A
+          が紙の資料に近い見た目のためです（大きく浮かせると禁止事項の「AI生成感の強いUI」に寄ります）。
+        </p>
+        <div className="mb-4 grid gap-4 sm:grid-cols-2">
+          <a href="#" className="card-lift border-line bg-surface group block border p-6">
+            <h3 className="text-lg">カードの見出し</h3>
+            <p className="text-ink-muted mt-2 text-sm leading-relaxed">
+              重ねてみてください。カード全体が反応します。
+            </p>
+            <span className="text-accent group-hover:text-accent-hover mt-4 inline-flex items-center gap-1 text-sm">
+              リンクの文言
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-150 group-hover:translate-x-1"
+              >
+                →
+              </span>
+            </span>
+          </a>
+          <div className="border-line bg-surface border p-6">
+            <h3 className="text-lg">動かないカード（比較用）</h3>
+            <p className="text-ink-muted mt-2 text-sm leading-relaxed">
+              押せないものは動かしません。動く＝押せる、を崩さないためです。
+            </p>
+          </div>
+        </div>
+        <ul className="text-ink-muted list-disc space-y-1 pl-5 text-xs">
+          <li>
+            OSで「視差効果を減らす」を有効にしている人には<strong>動かしません</strong>
+            。動きで気分が悪くなる人がいるためです
+          </li>
+          <li>
+            スマホでは hover を使いません。タップを hover と解釈して、
+            指を離しても浮いたままになるためです。代わりに押している間だけ沈みます
+          </li>
+          <li>キーボードで選んだときも同じ見た目になります</li>
+        </ul>
+      </Section>
+
       <Section title="セレクト">
         <div className="flex flex-wrap gap-3">
           <div className="w-56">

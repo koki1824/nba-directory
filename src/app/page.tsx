@@ -36,18 +36,32 @@ export default function Home() {
         </p>
       </section>
 
+      {/* カード全体を1つのリンクにしている。
+          リンクが文字だけだと、指で押せる範囲が狭く、押し外しやすい。
+          カードごと押せるようにすると、狙わなくても届く。 */}
       <section className="mt-12 grid gap-4 sm:grid-cols-2">
         {ENTRY_POINTS.map((entry) => (
-          <div key={entry.href} className="border-line bg-surface border p-6">
+          <Link
+            key={entry.href}
+            href={entry.href}
+            aria-label={entry.linkLabel}
+            className="card-lift border-line bg-surface group block border p-6"
+          >
             <h2 className="text-xl">{entry.title}</h2>
             <p className="text-ink-muted mt-2 text-sm leading-relaxed">{entry.description}</p>
-            <Link
-              href={entry.href}
-              className="text-accent hover:text-accent-hover mt-4 inline-block text-sm"
-            >
-              {entry.linkLabel} →
-            </Link>
-          </div>
+            {/* 矢印だけを少し右へ動かす。押せることを動きで伝えるため。
+                色の変化も併せて付ける。動きが見えない環境（視差効果を減らす設定）
+                でも分かるようにするため、動きだけに頼らない。 */}
+            <span className="text-accent group-hover:text-accent-hover mt-4 inline-flex items-center gap-1 text-sm">
+              {entry.linkLabel}
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-150 group-hover:translate-x-1"
+              >
+                →
+              </span>
+            </span>
+          </Link>
         ))}
       </section>
 

@@ -120,11 +120,22 @@ export function Logo({ size = 32, variant = "auto", className, title }: Props) {
  */
 export const SITE_DISPLAY_NAME = "NBA選手名鑑";
 
-export function LogoLockup({ size = 32, className }: { size?: number; className?: string }) {
+/**
+ * ヘッダーのロックアップは画面幅で大きさを変える。
+ *
+ * サイト名は大きく太くしたい（オーナー指示 2026-09-06）が、
+ * 狭い画面でそのまま大きくするとメニューが押し出されて横スクロールが出る。
+ * そこで小さい画面では一段小さくする。
+ *
+ * SVGの width/height 属性より CSS のクラスが優先されるので、
+ * size は「どこまで細部を描くか」の判断（COMPACT_THRESHOLD）に効かせたまま、
+ * 実際の表示サイズはクラスで切り替えている。
+ */
+export function LogoLockup({ size = 36, className }: { size?: number; className?: string }) {
   return (
-    <span className={cx("inline-flex items-center gap-2.5", className)}>
-      <Logo size={size} />
-      <span className="font-serif text-xl leading-none font-semibold tracking-wide">
+    <span className={cx("inline-flex items-center gap-2 sm:gap-2.5", className)}>
+      <Logo size={size} className="h-8 w-8 sm:h-9 sm:w-9" />
+      <span className="font-serif text-xl leading-none font-bold tracking-wide sm:text-2xl">
         {SITE_DISPLAY_NAME}
       </span>
     </span>

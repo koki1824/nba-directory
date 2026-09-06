@@ -95,3 +95,73 @@ table,
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+
+/* -------------------------------------------------------------------------
+ * 動きの扱い
+ *
+ * OS側で「視差効果を減らす」を有効にしている人がいる。
+ * 動きで気分が悪くなる人がいるため、その設定は必ず尊重する。
+ * ここで全体を止めておけば、今後どこにアニメーションを足しても漏れない。
+ * ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * .card-lift — 押せると分かるカード
+ *
+ * カーソルを重ねると少し浮き上がり、押すと沈む。
+ * 「ここは押せる」を、文字で説明せずに動きで伝えるための約束事。
+ *
+ * 設計の注意:
+ *   ・浮きは 2px、影も控えめにする。Direction A は紙の資料に近い見た目なので、
+ *     大きく浮かせると禁止事項の「AI生成感の強いUI」に寄る
+ *   ・:hover は @media (hover: hover) の中だけに書く。
+ *     スマホはタップを hover と解釈することがあり、
+ *     指を離しても浮いたままになるため
+ *   ・:focus-within を入れてキーボード操作でも同じ見た目にする
+ *   ・「視差効果を減らす」設定のときは動かさない（上の指定に加え、
+ *     移動そのものを打ち消す）
+ * ------------------------------------------------------------------------- */
+.card-lift {
+  transition:
+    transform 150ms ease-out,
+    box-shadow 150ms ease-out,
+    border-color 150ms ease-out;
+}
+
+@media (hover: hover) {
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px -4px rgb(15 29 45 / 0.18);
+    border-color: var(--color-line-strong);
+  }
+}
+
+.card-lift:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -4px rgb(15 29 45 / 0.18);
+  border-color: var(--color-line-strong);
+}
+
+/* 押している間は沈める。タップした手応えを出すため。 */
+.card-lift:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-lift,
+  .card-lift:hover,
+  .card-lift:focus-within,
+  .card-lift:active {
+    transform: none;
+  }
+}
