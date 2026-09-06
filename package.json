@@ -22,6 +22,7 @@
     "seed:dev:gen": "node scripts/gen-dev-seed.mjs",
     "seed:dev:check": "node scripts/gen-dev-seed.mjs --check",
     "verify:seed": "node scripts/verify-dev-seed.mjs",
+    "check:launch": "node scripts/check-launch.mjs",
     "db:types": "node scripts/gen-db-types.mjs",
     "db:types:check": "node scripts/gen-db-types.mjs --check",
     "test": "vitest run",

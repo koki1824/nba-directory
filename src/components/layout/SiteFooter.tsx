@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/Logo";
+import { UNOFFICIAL_NOTICE } from "@/config/legal";
 import { legalNavigation, visibleItems } from "@/config/navigation";
 
 /**
@@ -34,10 +35,10 @@ export function SiteFooter() {
 
         <div className="flex items-start gap-3">
           <Logo size={24} className="text-ink-muted mt-0.5" />
-          <p className="text-ink-muted text-xs leading-relaxed">
-            本サイトはNBAおよび各チーム、選手、関連団体とは一切関係のない非公式サイトです。
-            データは独自に収集・集計したものです。
-          </p>
+          {/* 文言は src/config/legal.ts に集約する。
+              フッターと法務ページで言い回しが違うと、
+              どれが正式な表明なのか分からなくなる。 */}
+          <p className="text-ink-muted text-xs leading-relaxed">{UNOFFICIAL_NOTICE}</p>
         </div>
       </div>
     </footer>
