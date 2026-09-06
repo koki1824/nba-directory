@@ -17,7 +17,19 @@ export default defineConfig({
     // *.db.test.ts はDBにつなぐテスト。DBを立てていない環境で
     // テスト全体が動かなくなるのを避けるため、こちらでは走らせない。
     // 実行は npm run test:db（vitest.integration.config.ts）。
-    exclude: ["node_modules/**", ".next/**", "e2e/**", "src/**/*.db.test.ts"],
+    //
+    // src/app 配下のページも対象外。データを読むページはサーバー側でしか
+    // 動かない作りになっており（server-only を読み込む）、
+    // ここで render しようとすると読み込みの時点で失敗する。
+    // ページの検証は E2E（Playwright）で行う。実際のブラウザで動かすほうが、
+    // 「本当に表示されるか」を確かめる目的にも合っている。
+    exclude: [
+      "node_modules/**",
+      ".next/**",
+      "e2e/**",
+      "src/**/*.db.test.ts",
+      "src/app/**/*.test.tsx",
+    ],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
