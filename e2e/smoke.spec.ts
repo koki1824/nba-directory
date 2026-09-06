@@ -228,3 +228,58 @@ test.describe("検索エンジン向けの設定", () => {
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   });
 });
+
+test.describe("トップページの中身（W2-4）", () => {
+  test("見出し・検索欄・注目ワードが出る", async ({ page }) => {
+    await page.goto("/");
+
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("選手を探す");
+    // ヘッダーとヒーローの2か所に検索欄がある（モック 01_top.jpg どおり）
+    await expect(page.getByRole("search")).toHaveCount(2);
+    await expect(page.getByRole("link", { name: "スコアリーダー" })).toBeVisible();
+  });
+
+  test("検索すると選手一覧に絞り込んで飛ぶ", async ({ page }) => {
+    await page.goto("/");
+
+    const hero = page.getByRole("search", { name: "選手・チームを名前で探す" });
+    await hero.getByRole("searchbox").fill("Okafor");
+    await hero.getByRole("button", { name: "検索する" }).click();
+
+    await page.waitForURL(/\/players\?q=Okafor/);
+    await expect(page.getByRole("heading", { level: 1, name: "選手一覧" })).toBeVisible();
+  });
+
+  test("空のまま検索しても落ちず、一覧を開く", async ({ page }) => {
+    await page.goto("/");
+
+    const hero = page.getByRole("search", { name: "選手・チームを名前で探す" });
+    await hero.getByRole("button", { name: "検索する" }).click();
+
+    await page.waitForURL(/\/players/);
+    await expect(page.getByRole("heading", { level: 1, name: "選手一覧" })).toBeVisible();
+  });
+
+  test("データがあれば今季ランキングとチーム一覧が出る", async ({ page }) => {
+    await page.goto("/");
+
+    const noDb = await page
+      .getByText("選手・チームのデータはまだ表示できていません")
+      .isVisible()
+      .catch(() => false);
+    test.skip(noDb, "DBにつながっていないため飛ばす");
+
+    await expect(page.getByRole("heading", { name: "チームから探す" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "年代から探す" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /ランキング一覧へ/ })).toBeVisible();
+  });
+
+  test("DBが無くても入口は見える（真っ白にしない）", async ({ page }) => {
+    // 接続先が未設定でもトップページは開ける、という作りの確認。
+    // ここでは「入口カードが常にある」ことだけを見る。
+    await page.goto("/");
+
+    await expect(page.getByRole("link", { name: "選手一覧ページへ" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "比較ページへ" })).toBeVisible();
+  });
+});

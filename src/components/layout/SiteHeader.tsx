@@ -1,13 +1,15 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { LogoLockup } from "@/components/brand/Logo";
+import { SiteSearch } from "@/components/layout/SiteSearch";
 import { mainNavigation, visibleItems } from "@/config/navigation";
 import { routes } from "@/config/routes";
 
 /**
  * 全ページ共通のヘッダー（W1-10）。
  * モック 01_top.jpg / 02_compare.jpg のヘッダーに対応する。
- * 検索欄は W2-5（選手一覧）で実装する。
+ * 検索欄はモックどおりヘッダーに置く（W2-4）。狭い画面では2段目に折り返す。
  */
 export function SiteHeader() {
   return (
@@ -34,6 +36,14 @@ export function SiteHeader() {
             ))}
           </ul>
         </nav>
+
+        {/* 検索欄。狭い画面では横幅いっぱいの2段目になり、
+            広い画面ではメニューの右に収まる。 */}
+        <div className="w-full lg:w-64">
+          <Suspense fallback={<div className="h-10" />}>
+            <SiteSearch label="選手・チームをヘッダーから探す" />
+          </Suspense>
+        </div>
       </div>
     </header>
   );
