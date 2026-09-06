@@ -24,6 +24,7 @@
     "verify:seed": "node scripts/verify-dev-seed.mjs",
     "check:launch": "node scripts/check-launch.mjs",
     "probe:api": "node scripts/probe-api.mjs",
+    "sync": "tsx scripts/sync.ts",
     "db:types": "node scripts/gen-db-types.mjs",
     "db:types:check": "node scripts/gen-db-types.mjs --check",
     "test": "vitest run",
@@ -67,6 +68,7 @@
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }

@@ -1,0 +1,80 @@
+name: 実データの取り込み
+
+# 手動でだけ動かす（当面）。
+#
+# 【自動実行にしていない理由】
+# APIの応答の形をまだ実物で確認できていない（W4-1 のコメント参照）。
+# 想定と違えば取り込みは止まる作りだが、まずは人が見ている前で1回流す。
+# 形が確かめられたら、日次の自動実行（W4-5）に切り替える。
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "取り込むシーズン（カンマ区切り。例: 2024-25,2023-24）"
+        required: true
+        default: "2024-25"
+      dry_run:
+        description: "書き込まずに、何が起きるかだけ見る"
+        type: boolean
+        default: true
+
+# 同時に走らせない。同じ行を2つの実行が同時に書くと、
+# どちらの値が残ったのか分からなくなる。
+concurrency:
+  group: sync-production
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: 取り込む
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: 必要な設定がそろっているか確認
+        id: check
+        env:
+          API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          missing=""
+          [ -z "$API_KEY" ] && missing="$missing BALLDONTLIE_API_KEY"
+          [ -z "$DB_URL" ] && missing="$missing SUPABASE_DB_URL"
+          if [ -n "$missing" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "未設定の項目があります:$missing"
+            echo "GitHub → Settings → Secrets and variables → Actions から登録してください。"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # まず必ず dry-run で流し、何件入るかを見る。
+      # いきなり本番に書くと、想定と違ったときに戻すのが大変。
+      - name: 取り込む内容を確認（dry-run）
+        if: steps.check.outputs.ready == 'true'
+        env:
+          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PROVIDER_PERSISTENCE_ALLOWED: "true"
+        run: npm run sync -- --seasons "${{ inputs.seasons }}" --dry-run
+
+      - name: 取り込む
+        if: steps.check.outputs.ready == 'true' && inputs.dry_run == false
+        env:
+          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PROVIDER_PERSISTENCE_ALLOWED: "true"
+        run: npm run sync -- --seasons "${{ inputs.seasons }}"
+
+      - name: 設定が足りない場合の案内
+        if: steps.check.outputs.ready != 'true'
+        run: |
+          echo "設定がそろうまで取り込みは実行できません。"
+          echo "登録後、このワークフローを手動で実行してください。"

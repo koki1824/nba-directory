@@ -28,7 +28,7 @@ import type {
  * 実物に合わせて直すときは、まずここを見る。
  */
 export const BALLDONTLIE = {
-  baseUrl: "https://api.balldontlie.io/v1",
+  baseUrl: process.env.BALLDONTLIE_BASE_URL ?? "https://api.balldontlie.io/v1",
   endpoints: {
     players: "/players",
     seasonAverages: "/season_averages",
@@ -310,6 +310,23 @@ export class BalldontlieProvider implements DataProvider {
       "シーズン成績",
     )) {
       for (const row of rows) {
+        const gamesPlayed = optionalNumber(row, "games_played");
+        const fgm = optionalNumber(row, "fgm");
+        const fga = optionalNumber(row, "fga");
+        const pts = optionalNumber(row, "pts");
+
+        // 【重要】このサイトは実数（通算の本数）を保存する設計になっている。
+        // 「試投0本」と「0%」を区別し、通算の率を正しく出すため（オーバーライド v3 §8）。
+        //
+        // season_averages が返すのは**1試合平均**で、小数になる。
+        // これをそのまま本数の欄に入れると、
+        //   ・「8.4本決めた」という存在しない記録になる
+        //   ・通算成績が平均の足し算になり、まったく違う数字になる
+        // ので、受け取らずに止める。
+        assertCountLike("fgm", fgm);
+        assertCountLike("fga", fga);
+        assertCountLike("pts", pts);
+
         stats.push({
           playerExternalId: requireId(row, "player_id", "シーズン成績"),
           seasonId: params.seasonId,
@@ -317,19 +334,41 @@ export class BalldontlieProvider implements DataProvider {
           // どのチームでの成績かは、この応答からは分からないことがある。
           // 分からないものを埋めずに null で返す。
           teamExternalId: null,
-          gamesPlayed: optionalNumber(row, "games_played"),
+          gamesPlayed,
           minutes: parseMinutes(row.min),
-          // 率ではなく実数を返す（オーバーライド v3 §8）。
-          // 率だけしか取れない場合は、ここで実数に戻せないので null にする。
-          fieldGoalsMade: optionalNumber(row, "fgm"),
-          fieldGoalsAttempted: optionalNumber(row, "fga"),
-          points: optionalNumber(row, "pts"),
+          fieldGoalsMade: fgm,
+          fieldGoalsAttempted: fga,
+          points: pts,
         });
       }
     }
 
     return stats;
   }
+}
+
+/**
+ * 本数として保存してよい値か確かめる。
+ *
+ * このサイトの player_season_stats は**シーズン合計の本数**を持つ。
+ * 1試合平均（小数）が来たら、それは別物なので受け取らない。
+ *
+ * 平均に試合数を掛けて合計を作ることもできるが、それは**推定値**であって
+ * 公式記録ではない。丸め誤差が積み上がり、通算の成功率がわずかにずれる。
+ * このサイトは数値の正しさを売りにしているので、推定値を実数として保存しない。
+ */
+function assertCountLike(field: string, value: number | null): void {
+  if (value === null) return;
+  if (Number.isInteger(value)) return;
+
+  throw new ApiShapeError(
+    `シーズン成績: "${field}" が整数ではありません（${value}）。\n` +
+      "1試合平均が返っている可能性があります。\n" +
+      "このサイトはシーズン合計の**本数**を保存する設計です（試投0本と0%を区別するため）。\n" +
+      "平均をそのまま入れると「8.4本決めた」という存在しない記録になり、\n" +
+      "通算成績も平均の足し算になって、まったく違う数字になります。\n" +
+      "合計を返すエンドポイントを使うか、保存する内容を決め直す必要があります。",
+  );
 }
 
 /**

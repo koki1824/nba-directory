@@ -167,21 +167,22 @@ describe("想定と違う形が来たとき", () => {
 });
 
 describe("シーズン成績", () => {
+  // シーズン合計の本数。1試合平均ではない。
   const STATS_PAGE = {
     data: [
       {
         player_id: 237,
         games_played: 70,
-        min: "34:12",
-        fgm: 9.1,
-        fga: 18.3,
-        pts: 25.4,
+        min: 2394,
+        fgm: 637,
+        fga: 1281,
+        pts: 1778,
       },
     ],
     meta: { next_cursor: null },
   };
 
-  it("実数を読み取る", async () => {
+  it("実数（シーズン合計の本数）を読み取る", async () => {
     const p = provider(pages(STATS_PAGE));
 
     const stats = await p.fetchSeasonStats({ seasonId: "2024-25", seasonType: "regular" });
@@ -190,9 +191,36 @@ describe("シーズン成績", () => {
       playerExternalId: "237",
       seasonId: "2024-25",
       gamesPlayed: 70,
-      fieldGoalsMade: 9.1,
-      points: 25.4,
+      fieldGoalsMade: 637,
+      points: 1778,
     });
+  });
+
+  it("1試合平均が来たら取り込まずに止める", async () => {
+    // ★このサイトは合計の本数を保存する設計。平均を入れると
+    //   「8.4本決めた」という存在しない記録になり、
+    //   キャリア通算が平均の足し算になって、まったく違う数字になる。
+    const averagesPage = {
+      data: [{ player_id: 237, games_played: 70, min: "34:12", fgm: 9.1, fga: 18.3, pts: 25.4 }],
+      meta: { next_cursor: null },
+    };
+    const p = provider(pages(averagesPage));
+
+    await expect(
+      p.fetchSeasonStats({ seasonId: "2024-25", seasonType: "regular" }),
+    ).rejects.toThrow(/1試合平均が返っている可能性/);
+  });
+
+  it("止めるときに、なぜ受け取れないかを説明する", async () => {
+    const averagesPage = {
+      data: [{ player_id: 237, games_played: 70, fgm: 9.1, fga: 18.3, pts: 25.4 }],
+      meta: { next_cursor: null },
+    };
+    const p = provider(pages(averagesPage));
+
+    await expect(
+      p.fetchSeasonStats({ seasonId: "2024-25", seasonType: "regular" }),
+    ).rejects.toThrow(/試投0本と0%を区別/);
   });
 
   it("どのチームでの成績か分からないときは埋めない", async () => {
