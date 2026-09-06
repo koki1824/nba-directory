@@ -157,3 +157,82 @@ test.describe("比較トレー（中核機能への入口）", () => {
     await expect(tray).toBeHidden();
   });
 });
+
+test.describe("選手ページ", () => {
+  async function openFirstPlayer(page: import("@playwright/test").Page) {
+    await page.goto("/players");
+    await skipIfNoDatabase(page);
+    await page.getByRole("row").nth(1).getByRole("link").first().click();
+    await page.waitForURL(/\/players\/dev-/);
+  }
+
+  test("プロフィールとシーズン別成績が出る", async ({ page }) => {
+    await openFirstPlayer(page);
+
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "シーズン別成績" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "キャリア通算" })).toBeVisible();
+  });
+
+  test("年齢の基準日を明記している（他サイトと1歳ずれるため）", async ({ page }) => {
+    // docs/DECISIONS.md §1 で「選手ページに明記する」と決めた項目。
+    await openFirstPlayer(page);
+
+    await expect(page.getByText(/そのシーズンの開幕日/)).toBeVisible();
+    await expect(page.getByText(/1歳ずれて見える/)).toBeVisible();
+  });
+
+  test("キャリアの率がシーズン率の平均でないと明記している", async ({ page }) => {
+    await openFirstPlayer(page);
+
+    await expect(page.getByText(/率を平均したものではなく/)).toBeVisible();
+  });
+
+  test("パーセンタイルに母集団の人数を併記している（Q3）", async ({ page }) => {
+    // 「上位20%」だけでは何と比べた値か分からない。
+    await openFirstPlayer(page);
+
+    // 母集団は説明文にも各棒の読み上げ用ラベルにも入る（どちらでも伝わるように）。
+    // ここでは説明文のほうを見る。
+    await expect(page.getByText(/規定到達者\s*\d+\s*人/).first()).toBeVisible();
+  });
+
+  test("移籍したシーズンは合計の下に内訳がぶら下がる", async ({ page }) => {
+    await page.goto("/players/dev-amari-lindqvist-15");
+    await skipIfNoDatabase(page);
+
+    // 内訳の行は「└ チーム名」で始まる
+    await expect(page.getByText(/^└ /).first()).toBeVisible();
+
+    // レギュラーシーズンの表の中で、そのシーズンの合計行は1つだけ。
+    // 同じシーズンが並列に2行出ると、合計なのか一部なのか分からない。
+    // （プレーオフの表にも同じシーズンの行があるので、表を限定して数える）
+    const regularTable = page.getByRole("table", { name: /レギュラーシーズン/ });
+    const seasonRows = regularTable.getByRole("row").filter({ hasText: "2023-24" });
+    await expect(seasonRows).toHaveCount(1);
+
+    // その下に内訳が2行ぶら下がる（移籍前と移籍後）
+    const partRows = regularTable.getByRole("row").filter({ hasText: "└" });
+    await expect(partRows).toHaveCount(2);
+  });
+
+  test("プレーオフ未出場は「記録がない」と書く（データ未取得と区別）", async ({ page }) => {
+    await page.goto("/players/dev-rashad-emerson-19");
+    await skipIfNoDatabase(page);
+
+    await expect(page.getByText(/プレーオフの出場記録はありません/).first()).toBeVisible();
+  });
+
+  test("手動修正が入っていることを隠さない", async ({ page }) => {
+    await page.goto("/players/dev-roman-petrov-5");
+    await skipIfNoDatabase(page);
+
+    await expect(page.getByText(/運営者が確認して修正しています/)).toBeVisible();
+  });
+
+  test("存在しない選手は404", async ({ page }) => {
+    const response = await page.goto("/players/dev-nonexistent-zzz");
+
+    expect(response?.status()).toBe(404);
+  });
+});

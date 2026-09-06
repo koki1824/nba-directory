@@ -21,7 +21,8 @@ test.describe("ルーティングの骨格（W1-10）", () => {
   // 主要なURLがすべて200で返ること。リンク切れを公開前に見つけるため。
   const paths = [
     "/players",
-    "/players/test-slug",
+    // "/players/test-slug" は W2-6 で実装したため、実在しない選手は 404 になる。
+    // 正しい挙動なのでここからは外した（404であることは players.spec.ts で確認している）。
     "/compare",
     "/teams",
     "/teams/test-slug",
