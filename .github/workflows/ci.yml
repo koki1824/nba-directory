@@ -96,6 +96,14 @@ jobs:
           SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
         run: node scripts/verify-views.mjs
 
+      # 率・平均・キャリア集計の式は DBのビューと TypeScript の2か所にある。
+      # 片方だけ直すと、選手ページとランキングで違う数字が出る。
+      # 共通の期待値（fixtures/stat-parity.json）で両方を突き合わせる。
+      - name: 計算がDBとTypeScriptで一致するか
+        env:
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: node scripts/verify-domain-parity.mjs
+
       # スキーマを変えたのに型を作り直し忘れた状態を検出する。
       # 型とDBが食い違うと、存在しない列を参照するコードが型チェックを通ってしまう。
       - name: 型がDBの構造と一致しているか

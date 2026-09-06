@@ -1,0 +1,101 @@
+{
+  "_comment": [
+    "TypeScript の計算（src/domain/stats.ts）と DBのビュー（supabase/migrations/0002_views.sql）が",
+    "同じ答えを出すことを固定するための共通データ。",
+    "",
+    "同じ式を2か所に持っている以上、片方だけ直すと画面とランキングで数字が食い違う。",
+    "入力と期待値をこのファイル1つに置き、両方から参照して突き合わせる。",
+    "",
+    "  TS側 : src/domain/parity.test.ts       （npm run test で毎回）",
+    "  DB側 : scripts/verify-domain-parity.mjs（CIのマイグレーション検証で毎回）",
+    "",
+    "期待値は手で検算した値。ここを実装の出力で上書きしないこと",
+    "（実装が間違ったときに期待値も一緒に間違い、テストが常に通る）。",
+    "",
+    "検算:",
+    "  通算FG%   = (1+40) / (1+100) = 41/101 = 0.405940...  ← シーズン率の平均 0.70 ではない",
+    "  通算eFG%  = (41 + 0.5×10) / 101 = 46/101 = 0.455445...",
+    "  通算TS%   = 102 / (2 × (101 + 0.44×12)) = 102 / 212.56 = 0.479864...",
+    "  通算RPG   = (51+151) / 51 = 202/51 = 3.960784...",
+    "  36分換算  = 102 × 36 / 1010 = 3.635643..."
+  ],
+
+  "seasons": ["9101-02", "9102-03"],
+
+  "rows": [
+    {
+      "_note": "1年目。1本打って1本成功（100%）。試投数が少ないので、率を平均すると通算が跳ね上がる",
+      "seasonId": "9101-02",
+      "stintId": null,
+      "gamesPlayed": 1,
+      "minutes": 10,
+      "fieldGoalsMade": 1,
+      "fieldGoalsAttempted": 1,
+      "threePointersMade": 0,
+      "threePointersAttempted": 0,
+      "freeThrowsMade": 0,
+      "freeThrowsAttempted": 0,
+      "offensiveRebounds": 1,
+      "defensiveRebounds": 1,
+      "assists": 1,
+      "steals": 0,
+      "blocks": 0,
+      "turnovers": 0,
+      "points": 2
+    },
+    {
+      "_note": "2年目。100本打って40本（40%）",
+      "seasonId": "9102-03",
+      "stintId": null,
+      "gamesPlayed": 50,
+      "minutes": 1000,
+      "fieldGoalsMade": 40,
+      "fieldGoalsAttempted": 100,
+      "threePointersMade": 10,
+      "threePointersAttempted": 30,
+      "freeThrowsMade": 10,
+      "freeThrowsAttempted": 12,
+      "offensiveRebounds": 50,
+      "defensiveRebounds": 150,
+      "assists": 100,
+      "steals": 25,
+      "blocks": 10,
+      "turnovers": 40,
+      "points": 100
+    }
+  ],
+
+  "expectedSeason": {
+    "9102-03": {
+      "fieldGoalPct": 0.4,
+      "threePointPct": 0.3333333333333333,
+      "freeThrowPct": 0.8333333333333334,
+      "effectiveFieldGoalPct": 0.45,
+      "trueShootingPct": 0.4749240121580547,
+      "pointsPerGame": 2,
+      "reboundsPerGame": 4,
+      "assistsPerGame": 2,
+      "pointsPer36": 3.6
+    }
+  },
+
+  "expectedCareer": {
+    "seasonsPlayed": 2,
+    "gamesPlayed": 51,
+    "minutes": 1010,
+    "fieldGoalsMade": 41,
+    "fieldGoalsAttempted": 101,
+    "points": 102,
+    "fieldGoalPct": 0.40594059405940597,
+    "threePointPct": 0.3333333333333333,
+    "freeThrowPct": 0.8333333333333334,
+    "effectiveFieldGoalPct": 0.45544554455445546,
+    "trueShootingPct": 0.47986450884456155,
+    "pointsPerGame": 2,
+    "reboundsPerGame": 3.9607843137254903,
+    "assistsPerGame": 1.9803921568627452
+  },
+
+  "wrongCareerFieldGoalPct": 0.7,
+  "_wrongComment": "シーズン率を平均した誤った値。両方の実装がこれを返さないことを確かめる"
+}
