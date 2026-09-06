@@ -108,7 +108,9 @@ async function loadMigrationFiles() {
   try {
     entries = await readdir(MIGRATIONS_DIR);
   } catch {
-    fail(`マイグレーションのディレクトリが見つかりません: ${MIGRATIONS_DIR}`);
+    // ディレクトリが無いのは「まだマイグレーションを1つも書いていない」だけで、
+    // 異常ではない。Gitは空のディレクトリを記録しないので、実際にこの状態は起こる。
+    return [];
   }
 
   const files = entries.filter((name) => name.endsWith(".sql")).sort();
