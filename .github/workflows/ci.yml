@@ -96,6 +96,13 @@ jobs:
           SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
         run: node scripts/verify-views.mjs
 
+      # スキーマを変えたのに型を作り直し忘れた状態を検出する。
+      # 型とDBが食い違うと、存在しない列を参照するコードが型チェックを通ってしまう。
+      - name: 型がDBの構造と一致しているか
+        env:
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: node scripts/gen-db-types.mjs --check
+
   e2e:
     name: E2Eテスト
     runs-on: ubuntu-latest

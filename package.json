@@ -17,6 +17,8 @@
     "migrate:dry": "node scripts/migrate.mjs --dry-run",
     "verify:schema": "node scripts/verify-schema.mjs",
     "verify:views": "node scripts/verify-views.mjs",
+    "db:types": "node scripts/gen-db-types.mjs",
+    "db:types:check": "node scripts/gen-db-types.mjs --check",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

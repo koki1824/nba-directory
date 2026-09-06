@@ -169,3 +169,19 @@ Tailwind のクラス衝突解決（`tailwind-merge` 相当）はしていない
 **このタスクで踏んだ落とし穴:** 古い `next start` のプロセスが残ってポート3000を掴んでおり、
 **再ビルドしても古い画面が配信され続けた。** スクリーンショットを見て「直っていない」と誤解しかけた。
 配信中のHTMLを直接確認して初めて分かった。**画面で確認するときは、見ているものが最新のビルドかを疑うこと。**
+
+---
+
+## W1-8 DBから型を生成
+
+### 13. `supabase gen types` ではなく自作の生成器を使う
+
+| 項目 | 内容 |
+| --- | --- |
+| 対象領域 | データベースの構造から TypeScript の型を作る |
+| 採用パターン | `scripts/gen-db-types.mjs` で `information_schema` と `pg_enum` を読み、型を生成する |
+| 不採用の代替案 | `supabase gen types typescript`（ROADMAP の当初の指定） |
+| 採用理由 | **Supabase CLI の型生成は内部で Docker を起動する。** この開発環境に Docker のデーモンが無く（`docker info` は動くが `/var/run/docker.sock` が無い）、**手元で型を作り直せない**。手元で回せない道具は結局使われなくなり、型とDBが食い違ったまま進む。`information_schema` を読むだけなら依存なしで同じことができる |
+| 出力の形 | Supabase CLI に寄せてある（`Row` / `Insert` / `Update`、enum は文字列のユニオン）。将来 Docker が使える環境になれば差し替えられる |
+| 作り直し忘れの防止 | `npm run db:types:check` が、生成結果とコミット済みファイルを比較する。CI の migrations ジョブで毎回実行する。**型とDBが食い違うと、存在しない列を参照するコードが型チェックを通ってしまう**ため、ここは自動化が要る |
+| 生成物の扱い | `src/db/types.generated.ts` は自動生成。Prettier の対象外にして、生成器の出力と整形が競合しないようにしている |
