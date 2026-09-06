@@ -103,10 +103,7 @@ export default async function Page({ params }: { params: Params }) {
         <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
           <Fact label="所属">
             {currentTeam ? (
-              <Link
-                href={routes.team(currentTeam.teamAbbreviation ?? "")}
-                className="hover:text-accent"
-              >
+              <Link href={routes.team(currentTeam.franchiseSlug)} className="hover:text-accent">
                 {currentTeam.teamNameJa ?? currentTeam.teamNameEn}
               </Link>
             ) : (
@@ -205,7 +202,9 @@ export default async function Page({ params }: { params: Params }) {
             >
               <span className="text-ink-muted">{h.seasonId}</span>
               <span>
-                {h.teamNameJa ?? h.teamNameEn}
+                <Link href={routes.team(h.franchiseSlug)} className="hover:text-accent">
+                  {h.teamNameJa ?? h.teamNameEn}
+                </Link>
                 {h.startedOn && h.endedOn && (
                   <span className="text-ink-muted ml-2 text-xs">
                     {h.startedOn} 〜 {h.endedOn}

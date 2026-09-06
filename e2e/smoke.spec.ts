@@ -25,8 +25,9 @@ test.describe("ルーティングの骨格（W1-10）", () => {
     // 正しい挙動なのでここからは外した（404であることは players.spec.ts で確認している）。
     "/compare",
     "/teams",
-    "/teams/test-slug",
-    "/teams/test-slug/2024-25",
+    // "/teams/test-slug" と年代別ロスターは W2-8 で実装したため、
+    // 実在しないチームは 404 になる。正しい挙動なのでここからは外した
+    // （404であることは teams.spec.ts で確認している）。
     "/teams/compare",
     "/rankings",
     "/terms",
@@ -185,12 +186,34 @@ test.describe("検索エンジン向けの設定", () => {
 
     expect(paths).toContain("/players");
     expect(paths).toContain("/rankings");
-    // チーム比較は組み合わせが限られるので載せてよい。
-    expect(paths).toContain("/teams/compare");
+    expect(paths).toContain("/teams");
 
     // robots で除外したものを sitemap に載せると指示が食い違う。
     expect(paths).not.toContain("/compare");
     expect(paths).not.toContain("/styleguide");
+
+    // チーム比較（W2-9）は公開後に回したので、中身が空のまま。
+    // 空のページを検索結果に出すと、来た人が何も得られない。
+    expect(paths).not.toContain("/teams/compare");
+  });
+
+  test("選手とチームの個別ページが sitemap に載る", async ({ request, page }) => {
+    // 一覧しか載っていないと、選手ページが検索から見つからない。
+    await page.goto("/players");
+    const noDb = await page
+      .getByText("データベースの接続先が設定されていません")
+      .isVisible()
+      .catch(() => false);
+    test.skip(noDb, "DBにつながっていないため飛ばす");
+
+    const response = await request.get("/sitemap.xml");
+    const body = await response.text();
+    const paths = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]!).pathname);
+
+    expect(paths.some((p) => p.startsWith("/players/dev-"))).toBe(true);
+    expect(paths.some((p) => p.startsWith("/teams/dev-"))).toBe(true);
+    // 年代別ロスターも載せる
+    expect(paths.some((p) => /^\/teams\/dev-[^/]+\/\d{4}-\d{2}$/.test(p))).toBe(true);
   });
 
   test("比較ページは noindex（自動生成ページを検索結果に出さない）", async ({ page }) => {

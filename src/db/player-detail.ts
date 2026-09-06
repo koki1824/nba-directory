@@ -84,6 +84,8 @@ export type PercentileRow = {
 export type TeamHistoryRow = {
   seasonId: string;
   stintOrder: number;
+  /** チームページのURLに使う。改名しても変わらないフランチャイズのslug */
+  franchiseSlug: string;
   teamAbbreviation: string | null;
   teamNameJa: string | null;
   teamNameEn: string | null;
@@ -268,11 +270,12 @@ export async function getPlayerPercentiles(
 /** 所属履歴。途中移籍があるシーズンは複数行になる。 */
 export async function getPlayerTeamHistory(playerId: string): Promise<TeamHistoryRow[]> {
   const rows = await query<Record<string, string | number | null>>(
-    `select st.season_id, st.stint_order,
+    `select st.season_id, st.stint_order, f.slug as franchise_slug,
             t.abbreviation as team_abbreviation, t.name_ja as team_name_ja, t.name_en as team_name_en,
             st.started_on::text as started_on, st.ended_on::text as ended_on
        from public.stints st
        join public.teams_effective t on t.id = st.team_id
+       join public.franchises f on f.id = t.franchise_id
       where st.player_id = $1
       order by st.season_id desc, st.stint_order asc`,
     [playerId],
@@ -281,6 +284,7 @@ export async function getPlayerTeamHistory(playerId: string): Promise<TeamHistor
   return rows.map((r) => ({
     seasonId: String(r.season_id),
     stintOrder: Number(r.stint_order ?? 1),
+    franchiseSlug: String(r.franchise_slug),
     teamAbbreviation: r.team_abbreviation === null ? null : String(r.team_abbreviation),
     teamNameJa: r.team_name_ja === null ? null : String(r.team_name_ja),
     teamNameEn: r.team_name_en === null ? null : String(r.team_name_en),
