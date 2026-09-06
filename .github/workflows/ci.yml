@@ -134,6 +134,27 @@ jobs:
   e2e:
     name: E2Eテスト
     runs-on: ubuntu-latest
+
+    # 中核機能（選手一覧・比較）はDBが要る。DBを立てないと、
+    # それらのE2Eが「飛ばされた」まま緑になり、試していないのに
+    # 動いているつもりになる。使い捨てのPostgreSQLを立てて本当に動かす。
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: verify
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/verify
+
     steps:
       - uses: actions/checkout@v5
 
@@ -148,6 +169,13 @@ jobs:
 
       - name: ブラウザの取得
         run: npx playwright install --with-deps chromium
+
+      - name: スキーマと開発用seedの投入
+        env:
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: |
+          node scripts/migrate.mjs
+          node scripts/seed-dev.mjs
 
       - name: E2Eテスト
         run: npm run test:e2e

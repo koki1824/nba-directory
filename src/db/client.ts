@@ -28,7 +28,6 @@ import "server-only";
 declare global {
   // 開発中はモジュールが再読み込みされるため、そのたびに新しいプールを作ると
   // 接続が積み上がって上限に達する。グローバルに1つだけ持たせて使い回す。
-  // eslint-disable-next-line no-var
   var __nbaPool: Pool | undefined;
 }
 
