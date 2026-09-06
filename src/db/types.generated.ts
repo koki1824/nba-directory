@@ -627,6 +627,10 @@ export type PlayerCareerStatsRow = {
   points_per_game: number | null;
   rebounds_per_game: number | null;
   assists_per_game: number | null;
+  steals_per_game: number | null;
+  blocks_per_game: number | null;
+  turnovers_per_game: number | null;
+  minutes_per_game: number | null;
 };
 
 export type PlayerOverridesRow = {
