@@ -65,9 +65,12 @@ async function main() {
       values ('${P}', 'career-player', 'Career Player', '8980-10-20'),
              ('${P_ZERO}', 'zero-player', 'Zero Player', '8985-01-01'),
              ('${P_OV}', 'override-player', 'Override Player', '8990-01-01');
+      -- 0003 の基礎データで同じ code が既に入っている。
+      -- 基礎データ投入前でも後でも同じように動くように、衝突は無視する。
       insert into metric_definitions (code, name_ja, name_en, higher_is_better, is_rate)
       values ('pts_per_game', '平均得点', 'PPG', true, false),
-             ('fg_pct', 'FG成功率', 'FG%', true, true);
+             ('fg_pct', 'FG成功率', 'FG%', true, true)
+      on conflict (code) do nothing;
     `);
 
     // 選手A: 1年目 1/1 (100%)、2年目 40/100 (40%)
@@ -182,10 +185,25 @@ async function main() {
     // --- 5. ランキングとパーセンタイル ----------------------------------------
     console.log("\nランキングと規定到達");
     // 規定: 10試合以上。選手A(9001-02)は1試合なので未到達。
+    //
+    // 0003 は「全シーズン共通の既定」（season_id が NULL・最低条件なし）を
+    // 全指標に入れている。ここでシーズン個別の行を足すと、
+    // 規定の照合が2件に当たる状況が再現できる。
+    // 0004 の修正が無いと、ここから先のチェックが落ちる。
     await client.query(`
       insert into ranking_rules (season_id, metric_code, season_type, minimum_games)
       values ('9001-02', 'pts_per_game', 'regular', 10);
     `);
+    const { rows: ruleCount } = await client.query(
+      `select count(*)::int as n from ranking_rules
+       where metric_code = 'pts_per_game' and season_type = 'regular'
+         and (season_id = '9001-02' or season_id is null)`,
+    );
+    check(
+      "共通の既定とシーズン個別の規定が両方ある状態を作れている（前提条件）",
+      ruleCount[0]?.n === 2,
+      `該当する規定 ${ruleCount[0]?.n} 件`,
+    );
     // 規定到達側の検証には専用の選手を使う。
     // P_OV は直前の手動修正テストで games_played を NULL にしてあるため使えない。
     await client.query(`
@@ -195,12 +213,24 @@ async function main() {
       values ('${P_QUAL}', '9001-02', 'regular', 20, 600, 400);
     `);
     const { rows: ranks } = await client.query(
-      `select player_id, is_qualified, rank from player_rankings
+      `select player_id, is_qualified, rank, minimum_games from player_rankings
        where season_id = '9001-02' and season_type = 'regular' and metric_code = 'pts_per_game'
        order by player_id`,
     );
     const aRow = ranks.find((r) => r.player_id === P);
     const qualRow = ranks.find((r) => r.player_id === P_QUAL);
+    // 規定が2件に当たると left join で行が倍になる（0004 で修正した不具合）。
+    // 「1選手 = 1行」を数で確かめる。ランキングに同じ選手が並ぶのを防ぐ。
+    check(
+      "1選手につきランキングの行はちょうど1つ（規定の重複マッチで倍にならない）",
+      new Set(ranks.map((r) => r.player_id)).size === ranks.length,
+      `${ranks.length} 行 / 選手 ${new Set(ranks.map((r) => r.player_id)).size} 人`,
+    );
+    check(
+      "シーズン個別の規定が共通の既定より優先される（10試合が適用される）",
+      aRow?.minimum_games === 10,
+      `適用された最低試合数 ${aRow?.minimum_games}`,
+    );
     check("規定未到達（1試合 < 10試合）は is_qualified が false", aRow?.is_qualified === false);
     check("規定未到達者には順位が付かない（NULL）", aRow?.rank === null);
     check(
