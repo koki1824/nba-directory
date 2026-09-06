@@ -117,6 +117,13 @@ jobs:
           node scripts/seed-dev.mjs
           node scripts/verify-dev-seed.mjs
 
+      # 画面が使う問い合わせを、実際のDBに投げて確かめる。
+      # SQLは書いてみるだけでは正しさが分からないので、seedを入れた状態で通す。
+      - name: DBにつなぐテスト
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: npm run test:db
+
       # スキーマを変えたのに型を作り直し忘れた状態を検出する。
       # 型とDBが食い違うと、存在しない列を参照するコードが型チェックを通ってしまう。
       - name: 型がDBの構造と一致しているか

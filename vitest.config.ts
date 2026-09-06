@@ -14,7 +14,10 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     // E2E（Playwright）は別コマンドで動かすので、Vitestの対象から外す。
     include: ["src/**/*.{test,spec}.{ts,tsx}", "scripts/**/*.test.mjs"],
-    exclude: ["node_modules/**", ".next/**", "e2e/**"],
+    // *.db.test.ts はDBにつなぐテスト。DBを立てていない環境で
+    // テスト全体が動かなくなるのを避けるため、こちらでは走らせない。
+    // 実行は npm run test:db（vitest.integration.config.ts）。
+    exclude: ["node_modules/**", ".next/**", "e2e/**", "src/**/*.db.test.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],

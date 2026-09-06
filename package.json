@@ -25,6 +25,7 @@
     "db:types": "node scripts/gen-db-types.mjs",
     "db:types:check": "node scripts/gen-db-types.mjs --check",
     "test": "vitest run",
+    "test:db": "vitest run --config vitest.integration.config.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
@@ -39,8 +40,10 @@
   },
   "dependencies": {
     "next": "15.5.22",
+    "pg": "^8.23.0",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
@@ -59,7 +62,6 @@
     "eslint-config-next": "15.5.22",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^30.0.1",
-    "pg": "^8.23.0",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.3",
