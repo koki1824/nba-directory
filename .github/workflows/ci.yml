@@ -104,6 +104,19 @@ jobs:
           SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
         run: node scripts/verify-domain-parity.mjs
 
+      # 生成器を直したのに dev_seed.sql を作り直し忘れた状態を検出する。
+      - name: 開発用seedが生成結果と一致するか
+        run: node scripts/gen-dev-seed.mjs --check
+
+      # seed は画面とテストの土台。境界ケースが静かに減ると、
+      # 試していないのに動いているつもりになる。数を見張る。
+      - name: 開発用seedの投入と検証
+        env:
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: |
+          node scripts/seed-dev.mjs
+          node scripts/verify-dev-seed.mjs
+
       # スキーマを変えたのに型を作り直し忘れた状態を検出する。
       # 型とDBが食い違うと、存在しない列を参照するコードが型チェックを通ってしまう。
       - name: 型がDBの構造と一致しているか
