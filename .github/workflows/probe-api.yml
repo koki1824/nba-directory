@@ -1,0 +1,51 @@
+name: APIの応答を確認
+
+# 手動でだけ動かす。自動では走らせない。
+#
+# 【なぜ手動か】
+# 外部APIのレート制限を無駄に使わないため。
+# 確認したいときにだけ、GitHub の画面から実行する。
+#
+# 【使い方】
+# GitHub → Actions → 「APIの応答を確認」→ Run workflow
+# 実行後、ログに応答の形が出る。
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    name: 応答の形を確認する
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+
+      - name: APIキーの有無を確認
+        id: secret
+        env:
+          API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+        run: |
+          if [ -z "$API_KEY" ]; then
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            echo "BALLDONTLIE_API_KEY が未設定です。"
+            echo "GitHub → Settings → Secrets and variables → Actions から登録してください。"
+          else
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # キーが無いときは緑のまま終わる。
+      # 赤くすると「いつも赤い」状態に慣れ、本物の失敗を見逃す。
+      - name: 応答の形を確認
+        if: steps.secret.outputs.has_key == 'true'
+        env:
+          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+        run: node scripts/probe-api.mjs
+
+      - name: キーが無い場合の案内
+        if: steps.secret.outputs.has_key != 'true'
+        run: |
+          echo "APIキーが登録されるまで、この確認は実行できません。"
+          echo "登録すると、このワークフローを手動で実行して応答の形を確認できます。"

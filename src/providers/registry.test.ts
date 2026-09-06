@@ -102,14 +102,38 @@ describe("resolveProvider", () => {
     ).toThrow(/許諾が確認できていません/);
   });
 
-  it("未実装のプロバイダは黙って seed に落とさず、未実装だと伝える", () => {
-    // 黙って seed を返すと、実データが表示されていると誤認する。
+  it("APIキーが無いまま外部プロバイダを指定すると、入口で止める", () => {
+    // キーが無いまま進めると、認証エラーが取得の途中で出て
+    // 「どこまで入ったか分からない」状態になる。
     expect(() =>
       resolveProvider(noopRunner, {
         dataProvider: "balldontlie",
         persistenceAllowed: "true",
+        balldontlieApiKey: undefined,
       }),
-    ).toThrow(/未実装/);
+    ).toThrow(/BALLDONTLIE_API_KEY/);
+  });
+
+  it("許諾とキーが揃えば外部プロバイダを返す", () => {
+    const provider = resolveProvider(noopRunner, {
+      dataProvider: "balldontlie",
+      persistenceAllowed: "true",
+      balldontlieApiKey: "test-key",
+    });
+
+    expect(provider.id).toBe("balldontlie");
+    expect(provider.persistenceAllowed).toBe(true);
+  });
+
+  it("黙って seed に落とさない", () => {
+    // seed を返すと、実データが表示されていると誤認する。
+    const provider = resolveProvider(noopRunner, {
+      dataProvider: "balldontlie",
+      persistenceAllowed: "true",
+      balldontlieApiKey: "test-key",
+    });
+
+    expect(provider.id).not.toBe("seed");
   });
 });
 

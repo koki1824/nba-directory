@@ -1,3 +1,4 @@
+import { BalldontlieProvider } from "./balldontlie";
 import { createSeedProvider, type SqlRunner } from "./seed-provider";
 import type { DataProvider, ProviderId } from "./types";
 
@@ -17,6 +18,8 @@ export type ProviderEnv = {
   dataProvider: string | undefined;
   /** 外部プロバイダのデータを自社DBへ保存してよいか */
   persistenceAllowed: string | undefined;
+  /** BALLDONTLIE のAPIキー */
+  balldontlieApiKey?: string | undefined;
 };
 
 const KNOWN_PROVIDERS: readonly ProviderId[] = ["seed", "balldontlie"];
@@ -69,13 +72,19 @@ export function resolveProvider(run: SqlRunner, env: ProviderEnv): DataProvider 
   switch (id) {
     case "seed":
       return createSeedProvider(run);
-    case "balldontlie":
-      // Phase 3（10/4 公開の直後）で実装する。
-      // 未実装のまま黙って seed を返すと、実データが出ていると誤認するので必ず止める。
-      throw new Error(
-        "BalldontlieProvider は未実装です（Phase 3 / W4-1 で実装）。" +
-          "現在は DATA_PROVIDER=seed で運用してください。",
-      );
+    case "balldontlie": {
+      const apiKey = env.balldontlieApiKey?.trim();
+      // キーが無いまま進めると、認証エラーが取得の途中で出て
+      // 「どこまで入ったか分からない」状態になる。入口で止める。
+      if (!apiKey) {
+        throw new Error(
+          "BALLDONTLIE_API_KEY が設定されていません。\n" +
+            "  GitHub Secrets（同期の実行時）または .env.local（手元）に設定してください。\n" +
+            "  キーが無いあいだは DATA_PROVIDER=seed のまま運用してください。",
+        );
+      }
+      return new BalldontlieProvider({ apiKey, persistenceAllowed: true });
+    }
   }
 }
 
@@ -84,5 +93,6 @@ export function providerEnvFromProcess(): ProviderEnv {
   return {
     dataProvider: process.env.DATA_PROVIDER,
     persistenceAllowed: process.env.PROVIDER_PERSISTENCE_ALLOWED,
+    balldontlieApiKey: process.env.BALLDONTLIE_API_KEY,
   };
 }
