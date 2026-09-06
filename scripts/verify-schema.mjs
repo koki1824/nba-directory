@@ -118,6 +118,34 @@ async function main() {
       noPolicy.map((r) => r.tablename).join(", "),
     );
 
+    console.log("\n基礎データ（W1-7）");
+    const { rows: po } = await client.query(
+      `select count(*)::int as n from ranking_rules
+       where season_type = 'playoff'
+         and (minimum_games is not null or minimum_minutes is not null or minimum_per_game is not null)`,
+    );
+    check(
+      "プレーオフのランキングに最低条件が設定されていない（DECISIONS §4）",
+      po[0]?.n === 0,
+      `条件付きの行が ${po[0]?.n} 件`,
+    );
+
+    const { rows: tov } = await client.query(
+      `select higher_is_better from metric_definitions where code = 'tov_per_game'`,
+    );
+    check("ターンオーバーは「少ない方が良い」になっている", tov[0]?.higher_is_better === false);
+
+    const { rows: lic } = await client.query(
+      `select count(*)::int as n from image_licenses
+       where is_allowed and code in ('CC-BY-NC','CC-BY-ND','UNKNOWN')`,
+    );
+    check("非商用・改変不可・不明のライセンスは許可されていない", lic[0]?.n === 0);
+
+    const { rows: src } = await client.query(
+      `select count(*)::int as n from data_sources where code in ('seed','manual','balldontlie')`,
+    );
+    check("データ出典が3件登録されている", src[0]?.n === 3);
+
     console.log("\n制約が実際に効くか（不正データを入れてみる）");
     // 検証は1つのトランザクションで行い、最後に必ず巻き戻す。
     await client.query("begin");
