@@ -89,6 +89,13 @@ jobs:
           SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
         run: node scripts/verify-schema.mjs
 
+      # ビューは画面に出る数値そのものを作る。答えが分かっているデータを入れて
+      # 期待値と一致するか確かめる。特にキャリアの率がシーズン率の平均になっていないこと。
+      - name: ビューの検証
+        env:
+          SUPABASE_DB_URL: postgres://postgres:postgres@localhost:5432/verify
+        run: node scripts/verify-views.mjs
+
   e2e:
     name: E2Eテスト
     runs-on: ubuntu-latest
